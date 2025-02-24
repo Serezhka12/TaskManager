@@ -44,7 +44,7 @@ public static class Constants
     [
         GetMyTasks,
         CompleteTask,
-        CompleteManyTasks,  
+        CompleteManyTasks,
         Logout
     ];
 
@@ -52,9 +52,8 @@ public static class Constants
     public const string WelcomeMessage = "Welcome to TaskManager";
     public const string AvailableCommandsFormat = "Available Commands: {0}";
     public const string EnterManagerName = "Enter manager name: ";
-    public const string ManagerCreatedSuccess = "Manager successfully created";
     public const string EnterDeveloperName = "Enter developer name: ";
-    public const string DeveloperCreatedSuccess = "Developer successfully created";
+
     public const string EnterUserId = "Enter user ID: ";
     public const string InvalidUserId = "Invalid ID";
     public const string UserNotFound = "User not found";
@@ -77,6 +76,10 @@ public static class Constants
     public const string TaskCompleted = "Task completed";
     public const string UnknownCommand = "Unknown command";
     public const string ErrorFormat = "Error: {0}";
+    public const string UserFormat = "ID: {0}, Name: {1}, Role: {2}";
+
+    public static string ManagerCreatedSuccess(int? userId) => $"Manager successfully created with id: {userId}";
+    public static string DeveloperCreatedSuccess(int? userId) => $"Developer successfully created with id: {userId}";
 
     public static void Welcome()
     {
@@ -86,7 +89,7 @@ public static class Constants
 
     public static void WriteAvailableCommands(List<string> commands)
     {
-        Console.WriteLine(string.Format(AvailableCommandsFormat, string.Join(", ", commands)));
+        Console.WriteLine((AvailableCommandsFormat, string.Join(", ", commands)));
         Console.WriteLine();
     }
 }

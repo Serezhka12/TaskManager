@@ -8,28 +8,31 @@ public class UserServices
 {
     private readonly UserRepository _userRepository = UserRepository.GetInstance();
 
-    public OperationResult<bool> CreateUser(string name)
+    public OperationResult<int?> CreateUser(string name)
     {
         var user = new UserDto()
         {
             Name = name,
             Role = Role.Developer
         };
-        return _userRepository.AddUser(user) ?
-            OperationResult<bool>.Success(true) :
-            OperationResult<bool>.Failure(ErrorMessages.CanNotCreateDeveloper());
+        var userId = _userRepository.AddUser(user);
+        return userId == null
+            ? OperationResult<int?>.Failure(ErrorMessages.CanNotCreateDeveloper())
+            : OperationResult<int?>.Success(userId);
+
     }
 
-    public OperationResult<bool> CreateManager(string name)
+    public OperationResult<int?> CreateManager(string name)
     {
         var user = new UserDto()
         {
             Name = name,
             Role = Role.Manager
         };
-        return _userRepository.AddUser(user) ?
-            OperationResult<bool>.Success(true) :
-            OperationResult<bool>.Failure(ErrorMessages.CanNotCreateManager());
+        var userId = _userRepository.AddUser(user);
+        return userId == null
+            ? OperationResult<int?>.Failure(ErrorMessages.CanNotCreateManager())
+            : OperationResult<int?>.Success(userId);
     }
 
     public OperationResult<User?> GetUserById(int userId)
@@ -38,5 +41,18 @@ public class UserServices
         return user != null ?
             OperationResult<User?>.Success(user) :
             OperationResult<User?>.Failure(ErrorMessages.UserNotFound(userId));
+    }
+
+    public OperationResult<List<User>> GetAllUsers()
+    {
+        var users = _userRepository.GetAllUsers();
+        return OperationResult<List<User>>.Success(users);
+    }
+
+    public OperationResult<List<User>> GetAllDevelopers()
+    {
+        var users = _userRepository.GetAllUsers();
+        var developers = users.Where(u => u.Role == Role.Developer).ToList();
+        return OperationResult<List<User>>.Success(developers);
     }
 }

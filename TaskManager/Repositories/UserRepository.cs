@@ -20,7 +20,7 @@ public class UserRepository
         return users.Remove(userId, out _);
     }
 
-    public bool AddUser(UserDto userDto)
+    public int? AddUser(UserDto userDto)
     {
         var users = _dataStorage.GetUsers();
         var id = _dataStorage.GetUserId();
@@ -30,7 +30,12 @@ public class UserRepository
             Name = userDto.Name,
             Role = userDto.Role
         };
-        return users.TryAdd(user.Id, user);
+        return users.TryAdd(user.Id, user) ? user.Id : null;
+    }
+
+    public List<User> GetAllUsers()
+    {
+        return _dataStorage.GetUsers().Values.ToList();
     }
 
     private static UserRepository? _instance;
@@ -45,5 +50,4 @@ public class UserRepository
 
         return _instance;
     }
-
 }

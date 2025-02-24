@@ -84,6 +84,12 @@ internal static class Program
             case Constants.GetAllTasks when _context.CurrentUserRole == Role.Manager:
                 GetAllTasks();
                 break;
+            case Constants.GetAllUsers when _context.CurrentUserRole == Role.Manager:
+                GetAllUsers();
+                break;
+            case Constants.GetAllDevs when _context.CurrentUserRole == Role.Manager:
+                GetAllDevelopers();
+                break;
             case Constants.AssignTaskToDev when _context.CurrentUserRole == Role.Manager:
                 AssignTaskToDev();
                 break;
@@ -109,7 +115,7 @@ internal static class Program
         if (string.IsNullOrEmpty(name)) return;
 
         var result = _userServices.CreateManager(name);
-        Console.WriteLine(result.IsSuccess ? Constants.ManagerCreatedSuccess : result.Error);
+        Console.WriteLine(result.IsSuccess ? Constants.ManagerCreatedSuccess(result.Data) : result.Error);
     }
 
     private static void CreateDeveloper()
@@ -119,7 +125,7 @@ internal static class Program
         if (string.IsNullOrEmpty(name)) return;
 
         var result = _userServices.CreateUser(name);
-        Console.WriteLine(result.IsSuccess ? Constants.DeveloperCreatedSuccess : result.Error);
+        Console.WriteLine(result.IsSuccess ? Constants.DeveloperCreatedSuccess(result.Data) : result.Error);
     }
 
     private static void Login()
@@ -202,6 +208,36 @@ internal static class Program
         foreach (var task in result.Data!)
         {
             Console.WriteLine((Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
+        }
+    }
+
+    private static void GetAllUsers()
+    {
+        var result = _userServices.GetAllUsers();
+        if (!result.IsSuccess)
+        {
+            Console.WriteLine(result.Error);
+            return;
+        }
+
+        foreach (var user in result.Data!)
+        {
+            Console.WriteLine(string.Format(Constants.UserFormat, user.Id, user.Name, user.Role));
+        }
+    }
+
+    private static void GetAllDevelopers()
+    {
+        var result = _userServices.GetAllDevelopers();
+        if (!result.IsSuccess)
+        {
+            Console.WriteLine(result.Error);
+            return;
+        }
+
+        foreach (var developer in result.Data!)
+        {
+            Console.WriteLine(string.Format(Constants.UserFormat, developer.Id, developer.Name, developer.Role));
         }
     }
 
