@@ -1,4 +1,5 @@
-﻿using TaskManager.Dto;
+﻿using TaskManager.Data;
+using TaskManager.Dto;
 using TaskManager.Entities;
 using TaskManager.Services;
 
@@ -10,7 +11,8 @@ internal static class Program
     private static readonly TaskService _taskService = new();
     private static readonly UserTaskService _userTaskService = new();
     private static readonly Context _context = new();
-    
+    private static readonly DataStorage _dataStorage = DataStorage.GetInstance();
+
     static async Task Main()
     {
         while (true)
@@ -33,7 +35,7 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(Constants.ErrorFormat, ex.Message));
+                Console.WriteLine((Constants.ErrorFormat, ex.Message));
             }
         }
     }
@@ -64,6 +66,7 @@ internal static class Program
                 Login();
                 break;
             case Constants.Exit:
+                _dataStorage.SaveToFile();
                 Environment.Exit(0);
                 break;
             case Constants.Logout when _context.CurrentUserId != null:
@@ -198,7 +201,7 @@ internal static class Program
 
         foreach (var task in result.Data!)
         {
-            Console.WriteLine(string.Format(Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
+            Console.WriteLine((Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
         }
     }
 
@@ -227,7 +230,7 @@ internal static class Program
 
         foreach (var task in result.Data!)
         {
-            Console.WriteLine(string.Format(Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
+            Console.WriteLine((Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
         }
     }
 

@@ -47,11 +47,10 @@ public class DataStorage
 
             var tasksJson = JsonSerializer.Serialize(_tasks, serializerOptions);
             File.WriteAllText(TasksFilePath, tasksJson);
-
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Помилка під час збереження файлів: {ex.Message}");
+            Console.WriteLine($"Error while saving files: {ex.Message}");
         }
     }
 
@@ -65,7 +64,7 @@ public class DataStorage
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Помилка під час завантаження файлів: {ex.Message}");
+            Console.WriteLine($"Error while loading files: {ex.Message}");
         }
     }
 
@@ -74,6 +73,12 @@ public class DataStorage
         if (File.Exists(UsersFilePath))
         {
             var usersJson = File.ReadAllText(UsersFilePath);
+            if (string.IsNullOrEmpty(usersJson) || usersJson == "[]" || usersJson == "{}")
+            {
+                File.WriteAllText(UsersFilePath, "{}");
+                return;
+            }
+            
             var usersData = JsonSerializer.Deserialize<ConcurrentDictionary<int, User>>(usersJson);
             if (usersData == null) return;
             foreach (var kvp in usersData)
@@ -96,6 +101,12 @@ public class DataStorage
         if (File.Exists(UserTasksFilePath))
         {
             var tasksJson = File.ReadAllText(UserTasksFilePath);
+            if (string.IsNullOrEmpty(tasksJson) || tasksJson == "[]" || tasksJson == "{}")
+            {
+                File.WriteAllText(UserTasksFilePath, "{}");
+                return;
+            }
+            
             var tasksData = JsonSerializer.Deserialize<ConcurrentDictionary<int, List<int>>>(tasksJson);
             if (tasksData == null) return;
             foreach (var kvp in tasksData)
@@ -113,7 +124,14 @@ public class DataStorage
     {
         if (File.Exists(TasksFilePath))
         {
-            var tasksList = JsonSerializer.Deserialize<ConcurrentDictionary<int, UserTask>>(File.ReadAllText(TasksFilePath));
+            var tasksJson = File.ReadAllText(TasksFilePath);
+            if (string.IsNullOrEmpty(tasksJson) || tasksJson == "[]" || tasksJson == "{}")
+            {
+                File.WriteAllText(TasksFilePath, "{}");
+                return;
+            }
+            
+            var tasksList = JsonSerializer.Deserialize<ConcurrentDictionary<int, UserTask>>(tasksJson);
             if (tasksList == null) return;
             foreach (var kvp in tasksList)
             {
@@ -126,7 +144,7 @@ public class DataStorage
         }
         else
         {
-            File.WriteAllText(TasksFilePath, "[]");
+            File.WriteAllText(TasksFilePath, "{}");
         }
     }
 
