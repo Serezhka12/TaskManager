@@ -11,7 +11,6 @@ internal static class Program
     private static readonly TaskService _taskService = new();
     private static readonly UserTaskService _userTaskService = new();
     private static readonly Context _context = new();
-    private static readonly DataStorage _dataStorage = DataStorage.GetInstance();
 
     static async Task Main()
     {
@@ -35,7 +34,7 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                Console.WriteLine((Constants.ErrorFormat, ex.Message));
+                Console.WriteLine(string.Format(Constants.ErrorFormat, ex.Message));
             }
         }
     }
@@ -57,44 +56,43 @@ internal static class Program
         switch (command)
         {
             case Constants.CreateMan:
-                CreateManager();
+                await CreateManager();
                 break;
             case Constants.CreateDev:
-                CreateDeveloper();
+                await CreateDeveloper();
                 break;
             case Constants.Login:
-                Login();
+                await Login();
                 break;
             case Constants.Exit:
-                _dataStorage.SaveToFile();
                 Environment.Exit(0);
                 break;
             case Constants.Logout when _context.CurrentUserId != null:
                 Logout();
                 break;
             case Constants.CreateTask when _context.CurrentUserRole == Role.Manager:
-                CreateTask();
+                await CreateTask();
                 break;
             case Constants.UpdateTask when _context.CurrentUserRole == Role.Manager:
-                UpdateTask();
+                await UpdateTask();
                 break;
             case Constants.DeleteTask when _context.CurrentUserRole == Role.Manager:
-                DeleteTask();
+                await DeleteTask();
                 break;
             case Constants.GetAllTasks when _context.CurrentUserRole == Role.Manager:
-                GetAllTasks();
+                await GetAllTasks();
                 break;
             case Constants.GetAllUsers when _context.CurrentUserRole == Role.Manager:
-                GetAllUsers();
+                await GetAllUsers();
                 break;
             case Constants.GetAllDevs when _context.CurrentUserRole == Role.Manager:
-                GetAllDevelopers();
+                await GetAllDevelopers();
                 break;
             case Constants.AssignTaskToDev when _context.CurrentUserRole == Role.Manager:
-                AssignTaskToDev();
+                await AssignTaskToDev();
                 break;
             case Constants.GetMyTasks when _context.CurrentUserRole == Role.Developer:
-                GetMyTasks();
+                await GetMyTasks();
                 break;
             case Constants.CompleteTask when _context.CurrentUserRole == Role.Developer:
                 await CompleteTask();
@@ -108,27 +106,27 @@ internal static class Program
         }
     }
 
-    private static void CreateManager()
+    private static async Task CreateManager()
     {
         Console.Write(Constants.EnterManagerName);
         var name = Console.ReadLine();
         if (string.IsNullOrEmpty(name)) return;
 
-        var result = _userServices.CreateManager(name);
+        var result = await _userServices.CreateManager(name);
         Console.WriteLine(result.IsSuccess ? Constants.ManagerCreatedSuccess(result.Data) : result.Error);
     }
 
-    private static void CreateDeveloper()
+    private static async Task CreateDeveloper()
     {
         Console.Write(Constants.EnterDeveloperName);
         var name = Console.ReadLine();
         if (string.IsNullOrEmpty(name)) return;
 
-        var result = _userServices.CreateUser(name);
+        var result = await _userServices.CreateUser(name);
         Console.WriteLine(result.IsSuccess ? Constants.DeveloperCreatedSuccess(result.Data) : result.Error);
     }
 
-    private static void Login()
+    private static async Task Login()
     {
         Console.Write(Constants.EnterUserId);
         if (!int.TryParse(Console.ReadLine(), out var userId))
@@ -137,7 +135,7 @@ internal static class Program
             return;
         }
 
-        var user = _userServices.GetUserById(userId);
+        var user = await _userServices.GetUserById(userId);
         if (!user.IsSuccess || user.Data == null)
         {
             Console.WriteLine(Constants.UserNotFound);
@@ -156,7 +154,7 @@ internal static class Program
         Console.WriteLine(Constants.LoggedOut);
     }
 
-    private static void CreateTask()
+    private static async Task CreateTask()
     {
         Console.Write(Constants.EnterTaskName);
         var name = Console.ReadLine();
@@ -166,11 +164,11 @@ internal static class Program
         var description = Console.ReadLine();
 
         var taskDto = new TaskDto { Name = name, Description = description };
-        var result = _taskService.CreateTask(taskDto);
+        var result = await _taskService.CreateTask(taskDto);
         Console.WriteLine(result.IsSuccess ? Constants.TaskCreatedSuccess : result.Error);
     }
 
-    private static void UpdateTask()
+    private static async Task UpdateTask()
     {
         Console.Write(Constants.EnterTaskId);
         if (!int.TryParse(Console.ReadLine(), out var taskId)) return;
@@ -183,22 +181,22 @@ internal static class Program
         var description = Console.ReadLine();
 
         var taskDto = new TaskDto { Name = name, Description = description };
-        var result = _taskService.UpdateTask(taskId, taskDto);
+        var result = await _taskService.UpdateTask(taskId, taskDto);
         Console.WriteLine(result.IsSuccess ? Constants.TaskUpdatedSuccess : result.Error);
     }
 
-    private static void DeleteTask()
+    private static async Task DeleteTask()
     {
         Console.Write(Constants.EnterTaskId);
         if (!int.TryParse(Console.ReadLine(), out var taskId)) return;
 
-        var result = _taskService.DeleteTask(taskId);
+        var result = await _taskService.DeleteTask(taskId);
         Console.WriteLine(result.IsSuccess ? Constants.TaskDeletedSuccess : result.Error);
     }
 
-    private static void GetAllTasks()
+    private static async Task GetAllTasks()
     {
-        var result = _taskService.GetAllTasks();
+        var result = await _taskService.GetAllTasks();
         if (!result.IsSuccess)
         {
             Console.WriteLine(result.Error);
@@ -207,13 +205,13 @@ internal static class Program
 
         foreach (var task in result.Data!)
         {
-            Console.WriteLine((Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
+            Console.WriteLine(string.Format(Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
         }
     }
 
-    private static void GetAllUsers()
+    private static async Task GetAllUsers()
     {
-        var result = _userServices.GetAllUsers();
+        var result = await _userServices.GetAllUsers();
         if (!result.IsSuccess)
         {
             Console.WriteLine(result.Error);
@@ -226,9 +224,9 @@ internal static class Program
         }
     }
 
-    private static void GetAllDevelopers()
+    private static async Task GetAllDevelopers()
     {
-        var result = _userServices.GetAllDevelopers();
+        var result = await _userServices.GetAllDevelopers();
         if (!result.IsSuccess)
         {
             Console.WriteLine(result.Error);
@@ -241,7 +239,7 @@ internal static class Program
         }
     }
 
-    private static void AssignTaskToDev()
+    private static async Task AssignTaskToDev()
     {
         Console.Write(Constants.EnterDevId);
         if (!int.TryParse(Console.ReadLine(), out var devId)) return;
@@ -249,15 +247,15 @@ internal static class Program
         Console.Write(Constants.EnterTaskId);
         if (!int.TryParse(Console.ReadLine(), out var taskId)) return;
 
-        var result = _userTaskService.AssignTaskToUser(devId, taskId);
+        var result = await _userTaskService.AssignTaskToUser(devId, taskId);
         Console.WriteLine(result.IsSuccess ? Constants.TaskAssignedSuccess : result.Error);
     }
 
-    private static void GetMyTasks()
+    private static async Task GetMyTasks()
     {
         if (_context.CurrentUserId == null) return;
 
-        var result = _userTaskService.GetUserAllTasks(_context.CurrentUserId.Value);
+        var result = await _userTaskService.GetUserAllTasks(_context.CurrentUserId.Value);
         if (!result.IsSuccess)
         {
             Console.WriteLine(result.Error);
@@ -266,7 +264,7 @@ internal static class Program
 
         foreach (var task in result.Data!)
         {
-            Console.WriteLine((Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
+            Console.WriteLine(string.Format(Constants.TaskFormat, task.Id, task.Name, task.Description, task.IsActive));
         }
     }
 
@@ -283,7 +281,7 @@ internal static class Program
     {
         if (_context.CurrentUserId == null) return;
 
-        var tasks = _userTaskService.GetUserAllTasks(_context.CurrentUserId.Value);
+        var tasks = await _userTaskService.GetUserAllTasks(_context.CurrentUserId.Value);
         if (!tasks.IsSuccess || tasks.Data == null || tasks.Data.Count == 0)
         {
             Console.WriteLine(Constants.NoActiveTasks);
@@ -298,7 +296,13 @@ internal static class Program
         }
 
         Console.WriteLine(Constants.ParallelTasksExecution);
-        await Task.WhenAll(activeTasks.Select(task => _userTaskService.CompleteTask(task.Id)));
+        var completionTasks = activeTasks.Select(task => Task.Run(async () =>
+        {
+            await _userTaskService.CompleteTask(task.Id);
+            Console.WriteLine($"Task {task.Id} ended");
+        }));
+
+        await Task.WhenAll(completionTasks);
         Console.WriteLine(Constants.AllTasksCompleted);
     }
 }

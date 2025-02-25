@@ -1,16 +1,17 @@
 ﻿using TaskManager.Data;
 using TaskManager.Entities;
+using TaskManager.Interfaces;
 
 namespace TaskManager.Repositories;
 
-public class UserTasksRepository
+public class UserTasksRepository: IUserTasksRepository
 {
     private readonly DataStorage _dataStorage = DataStorage.GetInstance();
 
-    public List<UserTask> GetUserTasks(int userId)
+    public async Task<List<UserTask>> GetUserTasks(int userId)
     {
-        var users = _dataStorage.GetUserTasks();
-        var tasks = _dataStorage.GetTasks();
+        var users = await _dataStorage.GetUserTasks();
+        var tasks = await _dataStorage.GetTasks();
         _ = users.TryGetValue(userId, out var userTasksId);
 
         var result = new List<UserTask>();
@@ -21,47 +22,58 @@ public class UserTasksRepository
 
         foreach (var taskId in userTasksId)
         {
-            tasks.TryGetValue(taskId, out var task);
-            if (task != null) result.Add(task);
+            if (tasks.TryGetValue(taskId, out var task))
+            {
+                result.Add(task);
+            }
         }
 
         return result;
     }
 
-    public bool AssignTaskToUser(int userId, int taskId)
+    public async Task<bool> AssignTaskToUser(int userId, int taskId)
     {
-        var allTasks = _dataStorage.GetUserTasks();
-        var exist = allTasks.TryGetValue(userId, out var tasks);
+        var allTasks = await _dataStorage.GetUserTasks();
+        var exists = allTasks.TryGetValue(userId, out var tasks);
 
-        if (!exist || tasks == null)
+        if (!exists || tasks == null)
         {
-            return allTasks.TryAdd(userId, [taskId]);
+            allTasks[userId] = [taskId];
+            await _dataStorage.SaveUserTasks(allTasks);
+            return true;
         }
 
         tasks.Add(taskId);
-
+        await _dataStorage.SaveUserTasks(allTasks);
         return true;
     }
 
-    public bool UnAssignAllUserTasks(int userId)
+    public async Task<bool> UnAssignAllUserTasks(int userId)
     {
-        var userTasks = _dataStorage.GetUserTasks();
-        return userTasks.TryRemove(userId, out _);
+        var userTasks = await _dataStorage.GetUserTasks();
+        var result = userTasks.Remove(userId);
+        if (result)
+        {
+            await _dataStorage.SaveUserTasks(userTasks);
+        }
+        return result;
     }
 
-    public void UnAssignUserTasks(int userId, int taskId)
+    public async Task UnAssignUserTasks(int userId, int taskId)
     {
-        var allTasks = _dataStorage.GetUserTasks();
-        _ = allTasks.TryGetValue(userId, out var tasks);
-        tasks?.Remove(taskId);
+        var allTasks = await _dataStorage.GetUserTasks();
+        if (allTasks.TryGetValue(userId, out var tasks))
+        {
+            tasks?.Remove(taskId);
+            await _dataStorage.SaveUserTasks(allTasks);
+        }
     }
 
-    public UserTask? GetUserTaskById(int userId, int taskId)
+    public async Task<UserTask?> GetUserTaskById(int userId, int taskId)
     {
-        var tasks = GetUserTasks(userId);
+        var tasks = await GetUserTasks(userId);
         return tasks.FirstOrDefault(t => t.Id == taskId);
     }
-
 
     private static UserTasksRepository? _instance;
     private UserTasksRepository(){}

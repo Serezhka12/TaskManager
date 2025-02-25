@@ -1,60 +1,60 @@
-﻿using TaskManager.Entities;
+﻿using TaskManager.Data;
+using TaskManager.Entities;
+using TaskManager.Interfaces;
 using TaskManager.Repositories;
 
 namespace TaskManager.Services;
 
-public class UserTaskService
+public class UserTaskService: IUserTaskService
 {
-    private readonly UserRepository _userRepository = UserRepository.GetInstance();
-    private readonly UserTasksRepository _userTasksRepository = UserTasksRepository.GetInstance();
-    private readonly TaskRepository _taskRepository = TaskRepository.GetInstance();
+    private readonly IUserRepository _userRepository = UserRepository.GetInstance();
+    private readonly IUserTasksRepository _userTasksRepository = UserTasksRepository.GetInstance();
+    private readonly ITaskRepository _taskRepository = TaskRepository.GetInstance();
 
-    public OperationResult<List<UserTask>> GetUserAllTasks(int userId)
+    public async Task<OperationResult<List<UserTask>>> GetUserAllTasks(int userId)
     {
-        var user = _userRepository.GetUser(userId);
+        var user = await _userRepository.GetUser(userId);
         if (user == null)
         {
             return OperationResult<List<UserTask>>.Failure(ErrorMessages.UserNotFound(userId));
         }
 
-        var tasks = _userTasksRepository.GetUserTasks(userId);
-
+        var tasks = await _userTasksRepository.GetUserTasks(userId);
         return OperationResult<List<UserTask>>.Success(tasks);
     }
 
-    public OperationResult<List<UserTask>> GetUserTasksByActive(int userId, bool isActive)
+    public async Task<OperationResult<List<UserTask>>> GetUserTasksByActive(int userId, bool isActive)
     {
-        var user = _userRepository.GetUser(userId);
+        var user = await _userRepository.GetUser(userId);
         if (user == null)
         {
             return OperationResult<List<UserTask>>.Failure(ErrorMessages.UserNotFound(userId));
         }
 
-        var tasks = _userTasksRepository.GetUserTasks(userId);
-
+        var tasks = await _userTasksRepository.GetUserTasks(userId);
         return OperationResult<List<UserTask>>.Success(tasks.Where(t => t.IsActive == isActive).ToList());
     }
 
-    public OperationResult<bool> AssignTaskToUser(int userId, int taskId)
+    public async Task<OperationResult<bool>> AssignTaskToUser(int userId, int taskId)
     {
-        var user = _userRepository.GetUser(userId);
+        var user = await _userRepository.GetUser(userId);
         if (user == null)
         {
             return OperationResult<bool>.Failure(ErrorMessages.UserNotFound(userId));
         }
 
-        var success = _userTasksRepository.AssignTaskToUser(userId, taskId);
+        var success = await _userTasksRepository.AssignTaskToUser(userId, taskId);
         return success ? OperationResult<bool>.Success(true) : OperationResult<bool>.Failure(ErrorMessages.CanNotAssignTask());
     }
 
     public async Task CompleteTask(int taskId)
     {
-        var task = _taskRepository.GetTaskById(taskId);
+        var task = await _taskRepository.GetTaskById(taskId);
         if (task == null)
         {
             return;
         }
-        await Task.Run(() => Thread.Sleep(3000));  // imitating work
-        _taskRepository.ChangeTaskStatus(taskId, false);
+        await Task.Delay(500);
+        await _taskRepository.ChangeTaskStatus(taskId, false);
     }
 }

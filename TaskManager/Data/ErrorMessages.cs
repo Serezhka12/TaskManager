@@ -1,4 +1,4 @@
-﻿namespace TaskManager;
+﻿namespace TaskManager.Data;
 
 public static class ErrorMessages
 {
