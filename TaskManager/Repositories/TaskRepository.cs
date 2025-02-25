@@ -1,60 +1,68 @@
 ﻿using TaskManager.Data;
 using TaskManager.Dto;
 using TaskManager.Entities;
+using TaskManager.Interfaces;
 
 namespace TaskManager.Repositories;
 
-public class TaskRepository
+public class TaskRepository: ITaskRepository
 {
     private readonly DataStorage _dataStorage = DataStorage.GetInstance();
 
-    public UserTask? GetTaskById(int taskId)
+    public async Task<UserTask?> GetTaskById(int taskId)
     {
-        _ = _dataStorage.GetTasks().TryGetValue(taskId, out var result);
+        var tasks = await _dataStorage.GetTasks();
+        return tasks.GetValueOrDefault(taskId);
+    }
+
+    public async Task<List<UserTask>> GetAllTasks()
+    {
+        var tasks = await _dataStorage.GetTasks();
+        return tasks.Values.ToList();
+    }
+
+    public async Task<bool> CreateTask(UserTask userTask)
+    {
+        var tasks = await _dataStorage.GetTasks();
+        var taskId = await _dataStorage.GetTaskId();
+        userTask.Id = taskId;
+
+        if (!tasks.TryAdd(userTask.Id, userTask)) return false;
+        await _dataStorage.SaveTasks(tasks);
+        return true;
+    }
+
+    public async Task UpdateTask(int taskId, TaskDto newTask)
+    {
+        var tasks = await _dataStorage.GetTasks();
+        if (tasks.TryGetValue(taskId, out var task))
+        {
+            task.Name = newTask.Name;
+            if (newTask.Description != null)
+            {
+                task.Description = newTask.Description;
+            }
+            await _dataStorage.SaveTasks(tasks);
+        }
+    }
+
+    public async Task<bool> DeleteTask(int taskId)
+    {
+        var tasks = await _dataStorage.GetTasks();
+        var result = tasks.Remove(taskId);
+        if (result)
+        {
+            await _dataStorage.SaveTasks(tasks);
+        }
         return result;
     }
 
-    public List<UserTask> GetAllTasks()
+    public async Task<bool> ChangeTaskStatus(int taskId, bool isActive)
     {
-        return _dataStorage.GetTasks().Select(kvp => kvp.Value).ToList();
-    }
-
-    public bool CreateTask(UserTask userTask)
-    {
-        var tasks = _dataStorage.GetTasks();
-        var taskId = _dataStorage.GetTaskId();
-        userTask.Id = taskId;
-        return tasks.TryAdd(userTask.Id, userTask);
-    }
-
-    public void UpdateTask(int taskId, TaskDto newTask)
-    {
-        var tasks = _dataStorage.GetTasks();
-        _ = tasks.TryGetValue(taskId, out var task);
-
-        task!.Name = newTask.Name;
-        if (newTask.Description != null)
-        {
-            task.Description = newTask.Description;
-        }
-    }
-
-    public bool DeleteTask(int taskId)
-    {
-        var tasks = _dataStorage.GetTasks();
-        return tasks.TryRemove(taskId, out _);
-    }
-
-    public bool ChangeTaskStatus(int taskId, bool isActive)
-    {
-        var tasks = _dataStorage.GetTasks();
-        _ = tasks.TryGetValue(taskId, out var task);
-        if (task == null)
-        {
-            return false;
-        }
-
+        var tasks = await _dataStorage.GetTasks();
+        if (!tasks.TryGetValue(taskId, out var task)) return false;
         task.IsActive = isActive;
+        await _dataStorage.SaveTasks(tasks);
         return true;
     }
 

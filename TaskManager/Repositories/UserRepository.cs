@@ -1,41 +1,54 @@
 ﻿using TaskManager.Data;
 using TaskManager.Dto;
 using TaskManager.Entities;
+using TaskManager.Interfaces;
+
 namespace TaskManager.Repositories;
 
-public class UserRepository
+public class UserRepository: IUserRepository
 {
     private readonly DataStorage _dataStorage = DataStorage.GetInstance();
 
-    public User? GetUser(int userId)
+    public async Task<User?> GetUser(int userId)
     {
-        var users = _dataStorage.GetUsers();
-        var exist = users.TryGetValue(userId, out var user);
-        return exist ? user : null;
+        var users = await _dataStorage.GetUsers();
+        return users.TryGetValue(userId, out var user) ? user : null;
     }
 
-    public bool DeleteUser(int userId)
+    public async Task<bool> DeleteUser(int userId)
     {
-        var users = _dataStorage.GetUsers();
-        return users.Remove(userId, out _);
+        var users = await _dataStorage.GetUsers();
+        var result = users.Remove(userId);
+        if (result)
+        {
+            await _dataStorage.SaveUsers(users);
+        }
+        return result;
     }
 
-    public int? AddUser(UserDto userDto)
+    public async Task<int?> AddUser(UserDto userDto)
     {
-        var users = _dataStorage.GetUsers();
-        var id = _dataStorage.GetUserId();
+        var users = await _dataStorage.GetUsers();
+        var id = await _dataStorage.GetUserId();
         var user = new User()
         {
             Id = id,
             Name = userDto.Name,
             Role = userDto.Role
         };
-        return users.TryAdd(user.Id, user) ? user.Id : null;
+
+        if (users.TryAdd(user.Id, user))
+        {
+            await _dataStorage.SaveUsers(users);
+            return user.Id;
+        }
+        return null;
     }
 
-    public List<User> GetAllUsers()
+    public async Task<List<User>> GetAllUsers()
     {
-        return _dataStorage.GetUsers().Values.ToList();
+        var users = await _dataStorage.GetUsers();
+        return users.Values.ToList();
     }
 
     private static UserRepository? _instance;

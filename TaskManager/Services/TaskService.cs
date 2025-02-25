@@ -1,14 +1,16 @@
-﻿using TaskManager.Dto;
+﻿using TaskManager.Data;
+using TaskManager.Dto;
 using TaskManager.Entities;
+using TaskManager.Interfaces;
 using TaskManager.Repositories;
 
 namespace TaskManager.Services;
 
-public class TaskService
+public class TaskService: ITaskService
 {
-    private readonly TaskRepository _tasksRepository = TaskRepository.GetInstance();
+    private readonly ITaskRepository _tasksRepository = TaskRepository.GetInstance();
 
-    public OperationResult<bool> CreateTask(TaskDto taskDto)
+    public async Task<OperationResult<bool>> CreateTask(TaskDto taskDto)
     {
         var task = new UserTask(taskDto.Name);
         if (taskDto.Description != null)
@@ -16,34 +18,35 @@ public class TaskService
             task.Description = taskDto.Description;
         }
 
-        if (_tasksRepository.CreateTask(task))
-        {
-            return OperationResult<bool>.Success(true);
-        }
-        return OperationResult<bool>.Failure(ErrorMessages.CanNotCreateTask());
+        var result = await _tasksRepository.CreateTask(task);
+        return result
+            ? OperationResult<bool>.Success(true)
+            : OperationResult<bool>.Failure(ErrorMessages.CanNotCreateTask());
     }
 
-    public OperationResult<bool> UpdateTask(int taskId, TaskDto taskDto)
+    public async Task<OperationResult<bool>> UpdateTask(int taskId, TaskDto taskDto)
     {
-        var task = _tasksRepository.GetTaskById(taskId);
+        var task = await _tasksRepository.GetTaskById(taskId);
         if (task == null) return OperationResult<bool>.Failure(ErrorMessages.CanNotUpdateTask());
-        _tasksRepository.UpdateTask(taskId, taskDto);
+        await _tasksRepository.UpdateTask(taskId, taskDto);
         return OperationResult<bool>.Success(true);
     }
 
-    public OperationResult<bool> DeleteTask(int taskId)
+    public async Task<OperationResult<bool>> DeleteTask(int taskId)
     {
-        var result = _tasksRepository.DeleteTask(taskId);
+        var result = await _tasksRepository.DeleteTask(taskId);
         return result ? OperationResult<bool>.Success(true) : OperationResult<bool>.Failure(ErrorMessages.CanNotDeleteTask());
     }
 
-    public OperationResult<List<UserTask>> GetAllTasks()
+    public async Task<OperationResult<List<UserTask>>> GetAllTasks()
     {
-        return OperationResult<List<UserTask>>.Success(_tasksRepository.GetAllTasks());
+        var tasks = await _tasksRepository.GetAllTasks();
+        return OperationResult<List<UserTask>>.Success(tasks);
     }
 
-    public OperationResult<UserTask?> GetTasksById(int taskId)
+    public async Task<OperationResult<UserTask?>> GetTasksById(int taskId)
     {
-        return OperationResult<UserTask?>.Success(_tasksRepository.GetTaskById(taskId));
+        var task = await _tasksRepository.GetTaskById(taskId);
+        return OperationResult<UserTask?>.Success(task);
     }
 }

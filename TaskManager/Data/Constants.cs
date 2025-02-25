@@ -1,4 +1,6 @@
-﻿namespace TaskManager;
+﻿using System.Text;
+
+namespace TaskManager.Data;
 
 public static class Constants
 {
@@ -50,7 +52,7 @@ public static class Constants
 
     // Console messages
     public const string WelcomeMessage = "Welcome to TaskManager";
-    public const string AvailableCommandsFormat = "Available Commands: {0}";
+    public const string AvailableCommandsFormat = "Available Commands: ";
     public const string EnterManagerName = "Enter manager name: ";
     public const string EnterDeveloperName = "Enter developer name: ";
 
